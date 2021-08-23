@@ -2,7 +2,7 @@
 
 [![Ruby on Rails ガイド - 体系的に Rails を学ぼう](https://raw.githubusercontent.com/yasslab/railsguides.jp/master/guides/assets/images/header-railsguides.png)](https://railsguides.jp/)
 
-## 『Railsガイド』とは？
+## 『Railsガイド』とは？aa
 
 『Railsガイド』は [Ruby on Rails Guides](https://guides.rubyonrails.org/) に基づいた大型リファレンスガイドです。   
 Railsの各機能を体系的に学び、プロダクト開発の生産性を高めたいときに役立ちます。
