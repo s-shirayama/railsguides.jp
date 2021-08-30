@@ -177,7 +177,7 @@ config.active_record.database_resolver_context = MyCookieResolver
 
 ## コネクションを手動で切り替える
 
-アプリケーションでprimaryやreplicaに接続するときに、コネクションの自動切り替えが適切ではないことがあります。たとえば、特定のリクエストについては、たとえPOSTリクエストパスにいる場合であっても常にreplicaに送信したいとします。
+アプリケーションでwriterやreplicaに接続するときに、コネクションの自動切り替えが適切ではないことがあります。たとえば、特定のリクエストについては、たとえPOSTリクエストパスにいる場合であっても常にreplicaに送信したいとします。
 
 Railsはこのような場合のために、必要なコネクションに切り替える`connected_to`メソッドを提供しています。
 
@@ -194,6 +194,42 @@ end
 ここで注意したいのは、ロールを設定した`connected_to`では、既存のコネクションの探索や切り替えにそのコネクションのspecification名が用いられることです。つまり、`connected_to(role: :nonexistent)`のように不明なロールを渡すと、`ActiveRecord::ConnectionNotEstablished (No connection pool with 'AnimalsBase' found
 for the 'nonexistent' role.)`エラーが発生します。
 
+## 水平分割
+シャード間で同じスキーマを維持したまま、DBを分割してレコード数を減らすことを水平分割と言います。一般的にマルチテナントシャーディングと呼ばれています。
+
+Railsで水平分割を利用するためのAPIはRails6.0から提供されているマルチデータベース/垂直分割APIは似ています。
+
+シャードはこんな風に３階層の設定で定義されます：
+
+```yaml
+production:
+  primary:
+    database: my_primary_database
+    adapter: mysql2
+  primary_replica:
+    database: my_primary_database
+    adapter: mysql2
+    replica: true
+  primary_shard_one:
+    database: my_primary_shard_one
+    adapter: mysql2
+  primary_shard_one_replica:
+    database: my_primary_shard_one
+    adapter: mysql2
+    replica: true
+```
+
+モデルはshardsをキーにしてconnects_to APIでコネクションを発行します：
+
+```ruby
+class ApplicationRecord < ActiveRecord::Base
+  self.abstract_class = true
+  connects_to shards: {
+    default: { writing: :primary, reading: :primary_replica },
+    shard_one: { writing: :primary_shard_one, reading: :primary_shard_one_replica }
+  }
+end
+```
 
 ## 注意点
 
