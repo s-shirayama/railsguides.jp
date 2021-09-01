@@ -188,12 +188,43 @@ ActiveRecord::Base.connected_to(role: :reading) do
 end
 ```
 
+```ruby
+class ApplicationRecord < ActiveRecord::Base
+  self.abstract_class = true
 
-`connected_to`呼び出しの「ロール」では、そのコネクションハンドラ（またはロール）で接続されたコネクションを探索します。`reading`コネクションハンドラは、`reading`というロール名を持つ`connects_to`を介して接続されたすべてのコネクションを維持します。
+  connects_to shards: {
+    default: { writing: :primary, reading: :primary_replica },
+    shard_one: { writing: :primary_shard_one, reading: :primary_shard_one_replica }
+  }
+end
+```
 
-ここで注意したいのは、ロールを設定した`connected_to`では、既存のコネクションの探索や切り替えにそのコネクションのspecification名が用いられることです。つまり、`connected_to(role: :nonexistent)`のように不明なロールを渡すと、`ActiveRecord::ConnectionNotEstablished (No connection pool with 'AnimalsBase' found
-for the 'nonexistent' role.)`エラーが発生します。
+その後、モデルは`connected_to`APIを使って手動でコネクションを切り替えることができます。 シャーディングを使用する場合は、`role`と`shard`の両方を渡す必要があります。
 
+```ruby
+ActiveRecord::Base.connected_to(role: :writing, shard: :default) do
+  @id = Person.create! # Creates a record in shard default
+end
+
+ActiveRecord::Base.connected_to(role: :writing, shard: :shard_one) do
+  Person.find(@id) # Can't find record, doesn't exist because it was created
+                   # in the default shard
+end
+```
+
+水平シャーディングAPIはリードレプリカもサポートしています。`connected_to`APIでロールとシャードを入れ替えることができます。
+
+```ruby
+ActiveRecord::Base.connected_to(role: :reading, shard: :shard_one) do
+  Person.first # Lookup record from read replica of shard one
+end
+```
+
+## 粒度の高いデータベース接続切り替え
+
+Rails 6.1では、すべてのデータベースに対してグローバルにコネクションを切り替えるのではなく、1つのデータベースに対してコネクションを切り替えることができます。 この機能を使うには、まずアプリケーションの設定で`config.active_record.legacy_connection_handling`を`false`に設定する必要があります。パプリックAPIは同じ動作をするので、ほとんどのアプリケーションは他に変更を加える必要はありません。
+
+`legacy_connection_handling`をfalseに設定すると、抽象的な接続クラスでも他のコネクションに影響を与えずにコネクションを切り替えることができます。これは、`ApplicationRecord`のクエリがプライマリに送られることを保証しつつ、`AnimalsRecord`のクエリをレプリカから読み込むように切り替えるときに便利です。
 
 ## 注意点
 
