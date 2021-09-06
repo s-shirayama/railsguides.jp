@@ -205,7 +205,7 @@ AnimalsRecord.connected_to(role: :reading, shard: :shard_one) do
 end
 ```
 
-primaryデータベース群のみを切り替えたい場合は`ApplicationRecord`を使用してください:
+primaryデータベースクラスタのみを切り替えたい場合は`ApplicationRecord`を使用してください:
 
 ```ruby
 ApplicationRecord.connected_to(role: :reading, shard: :shard_one) do
