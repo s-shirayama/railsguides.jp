@@ -220,7 +220,7 @@ ActiveRecord::Base.connected_to(role: :reading, shard: :shard_one) do
 end
 ```
 
-## 粒度の高いデータベース接続切り替え
+## 細かなデータベース接続切り替え
 
 Rails 6.1では、すべてのデータベースに対してグローバルにコネクションを切り替えるのではなく、1つのデータベースに対してコネクションを切り替えることができます。 この機能を使うには、まずアプリケーションの設定で`config.active_record.legacy_connection_handling`を`false`に設定する必要があります。パプリックAPIは同じ動作をするので、ほとんどのアプリケーションは他に変更を加える必要はありません。
 
